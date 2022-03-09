@@ -4,18 +4,19 @@ use std::{
     net::{TcpListener, TcpStream},
 };
 
+use server::ThreadPool;
+
 fn main() {
     let tcplistener = TcpListener::bind("127.0.0.1:7878").unwrap();
-    for stream in tcplistener.incoming() {
-        match stream {
-            Ok(stream) => {
-                println!("Connection established!");
-                handle_connection(stream);
-            }
-            Err(e) => {
-                println!("Connection failed: {}", e);
-            }
-        }
+
+    let pool = ThreadPool::new(4);
+
+    for stream in tcplistener.incoming().take(3) {
+        let stream = stream.unwrap();
+
+        pool.execute(|| {
+            handle_connection(stream);
+        });
     }
 }
 
